@@ -67,6 +67,10 @@ extern "C"
 		return lastError.size() ? lastError.c_str() : nullptr;
 	}
 
+	// takes a pointer and does nothing
+	EXPORT void mongoh_do_nothing([[maybe_unused]] void *pointerArgument)
+	{}
+
 	EXPORT const char* mongoh_insert_one(mongoc_collection_t *collection, const char *documentJsonText)
 	{
 		const unique_bson_ptr document = jsonToBson(documentJsonText);

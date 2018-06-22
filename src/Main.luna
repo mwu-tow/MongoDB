@@ -54,6 +54,12 @@ def consumeBsonStringToText ptr:
     bson_free ptr
     text
 
+# FIXME: [MU] This function intentionally ignores destructor, because ManagedPointer is awfully broken
+#             and would otherwise call destructor for objects still in use. 
+#             To be changed when the bug is fixed: https://github.com/luna/luna/issues/212
+def managedPtr destructor ptr:
+    ManagedPointer None . fromPointer (mongoh "mongoh_do_nothing") ptr
+
 # Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
@@ -89,6 +95,9 @@ class Collection:
 
 class Database:
     ptr :: ManagedPointer None
+    def get_name:
+        nameCStr = mongoc "mongoc_database_get_name" . call (Pointer CChar) [self.ptr.toCArg]
+        readTextUnownedFromCStr nameCStr.ptr
     def get_collection_names:
         bson_strfreev = bsonc "bson_strfreev"
         mongoh_get_collection_names = mongoh "mongoh_get_collection_names"
@@ -109,7 +118,7 @@ class Client:
     def get_collection dbname collectionName:
         mongoc_collection_destroy = mongoc "mongoc_collection_destroy"
         collectionHandle = twoStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_collection") dbname collectionName
-        managedCollectionHandle = ManagedPointer None . fromPointer mongoc_collection_destroy collectionHandle
+        managedCollectionHandle = managedPtr mongoc_collection_destroy collectionHandle
         Collection managedCollectionHandle
 
     def set_appname: 
@@ -118,7 +127,7 @@ class Client:
     def get_database dbname: 
         mongoc_database_destroy = mongoc "mongoc_database_destroy"
         dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
-        Database (ManagedPointer None . fromPointer mongoc_database_destroy dbHandle)
+        Database (managedPtr mongoc_database_destroy dbHandle)
 
     def simple_command dbname commandJson:
         result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText
@@ -140,7 +149,7 @@ class MongoDB:
             mongoc_client_new = mongoc "mongoc_client_new"
             mongoc_client_destroy = mongoc "mongoc_client_destroy"
             ptr = mongoc_client_new.call (Pointer None)  [uri_cstr]
-            managedHandle = ManagedPointer None . fromPointer mongoc_client_destroy ptr
+            managedHandle = managedPtr mongoc_client_destroy ptr
             Client managedHandle
 
 def reportError:
@@ -164,6 +173,7 @@ def main:
     print (runError (client.simple_command "admin" wrongCommandJSON))
     collection = client.get_collection "lunaDB" "lunaCollection"
     collection.insertOne (JSON.parse '{"hello": "world"}')
+    print ("Database name is " + db.get_name)
     print ("Collection name is " + collection.get_name)
     print (runError (collection.insertOne  (JSON.parse '{"hello": world}')))
     findQuery = JSON.parse '{"hello" : "s"}'
