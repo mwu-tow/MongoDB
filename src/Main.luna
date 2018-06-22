@@ -77,6 +77,14 @@ class Collection:
             False: 
                 print (consumeBsonStringToText result.ptr)
 
+    def update_one selector updates:
+        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_update_one") selector.toText updates.toText
+        case result.isNull of 
+        True: 
+            reportError
+        False: 
+            consumeBsonStringToText result.ptr
+
     # JSON -> [JSON]
     # returns all documents in collection that match given query
     def find_all query:
@@ -157,7 +165,7 @@ def reportError:
     error = getLastError.call (Pointer CChar) []
     case error.isNull of 
             True:  throw "No error information"
-            False: throw (CString.fromRetType error.ptr).toText
+            False: throw (readTextUnownedFromCStr error.ptr)
 
 def main:
     MongoDB.init
@@ -177,6 +185,10 @@ def main:
     print ("Collection name is " + collection.get_name)
     print (runError (collection.insertOne  (JSON.parse '{"hello": world}')))
     findQuery = JSON.parse '{"hello" : "s"}'
+
+    updateResult = collection.update_one findQuery ('{"$set": {"cos" : "nowego"}}')
+    print ("Update result: " + updateResult.toText)
+
     print ("Searching for documents with query " + findQuery.toText + "...")
     documents = collection.find_all findQuery
     print ("Found " + documents.length.toText + " documents:")
