@@ -18,9 +18,7 @@ static std::string lastError;
 struct unique_bson_ptr
 {
 	std::unique_ptr<bson_t, void(*)(bson_t*)> ptr;
-
 	unique_bson_ptr(bson_t *ptr) : ptr(ptr, bson_destroy) {}
-
 	explicit operator bool() const noexcept { return ptr != nullptr; }
 	auto get() const noexcept { return ptr.get(); }
 };
@@ -91,6 +89,29 @@ extern "C"
 
 		return result;
 		//bson_strfreev(result);
+	}
+
+	// returns text json to be freed with bson_free
+	EXPORT char *mongoh_find_all(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr query = jsonToBson(queryJsonText);
+		if(!query)
+			return nullptr;
+
+		auto documentsToRet = bson_new(); // list of all matching documents
+		auto cursor = mongoc_collection_find_with_opts(collection, query.get(), nullptr, nullptr);
+
+		int i = 0;
+		const bson_t *doc;
+		while (mongoc_cursor_next(cursor, &doc)) 
+		{
+			bson_append_document(documentsToRet, std::to_string(i).c_str(), -1, doc);
+		}
+		mongoc_cursor_destroy (cursor);
+
+		auto ret = bson_array_as_json(documentsToRet, nullptr);
+		bson_destroy(documentsToRet);
+		return ret;
 	}
 
 	EXPORT const char* getLastError()

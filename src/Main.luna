@@ -22,6 +22,7 @@ def bson_free ptr:
     funptr = bsonc "bson_free"
     funptr.call None [ptr.toCArg]
 
+# TODO: [MU] make sure that some lazy evaluation thing does not break it
 def bracket before after item:
     sth = before
     result = runError (item sth)
@@ -53,15 +54,33 @@ def consumeBsonStringToText ptr:
     bson_free ptr
     text
 
+# Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
 
-    def insertOne documentJsonText:
-        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_insert_one") documentJsonText
+    # Takes a JSON object -- a document being inserted into the collection
+    def insertOne documentJson:
+        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_insert_one") documentJson.toText
         case result.isNull of 
             True: reportError
             False: 
                 print (consumeBsonStringToText result.ptr)
+
+    # JSON -> [JSON]
+    # returns all documents in collection that match given query
+    def find_all query:
+        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_find_all") query.toText
+        case result.isNull of 
+            True: 
+                reportError
+            False: 
+                jsonResultsText = consumeBsonStringToText result.ptr
+                jsonResults = JSON.parse jsonResultsText
+                case jsonResults of
+                    JSONArray docs: docs
+                    _: throw "Collection.find: Invalid JSON result: expected JSON array"
+
+
 
 class Database:
     ptr :: ManagedPointer None
@@ -97,8 +116,8 @@ class Client:
         dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
         Database (ManagedPointer None . fromPointer mongoc_database_destroy dbHandle)
 
-    def simple_command dbname commandJsonText:
-        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJsonText
+    def simple_command dbname commandJson:
+        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText
         case result.isNull of 
             True: reportError
             False: 
@@ -124,7 +143,7 @@ def reportError:
     getLastError = mongoh "mongoh_get_error"
     error = getLastError.call (Pointer CChar) []
     case error.isNull of 
-            True:  print "No error information"
+            True:  throw "No error information"
             False: throw (CString.fromRetType error.ptr).toText
 
 def main:
@@ -135,11 +154,19 @@ def main:
     db = client.get_database "lunaDB"
     print db.get_collection_names
 
-    client.simple_command "admin" '{"ping": 1}'
-    print (runError (client.simple_command "admin" '{"pung": 1}'))
+    pingCommandJSON = JSON.parse '{"ping": 1}'
+    client.simple_command "admin" pingCommandJSON
+    wrongCommandJSON = JSON.parse '{"pung": 1}'
+    print (runError (client.simple_command "admin" wrongCommandJSON))
     collection = client.get_collection "lunaDB" "lunaCollection"
-    collection.insertOne '{"hello": "world"}'
-    print (runError (collection.insertOne '{"hello": world}'))
+    collection.insertOne (JSON.parse '{"hello": "world"}')
+    print (runError (collection.insertOne  (JSON.parse '{"hello": world}')))
+    findQuery = JSON.parse '{"hello" : "s"}'
+    print ("Searching for documents with query " + findQuery.toText + "...")
+    documents = collection.find_all findQuery
+    print ("Found " + documents.length.toText + " documents:")
+    documents.each doc:
+        print (" - " + doc.toText)
 
 
 def test_bracket:
