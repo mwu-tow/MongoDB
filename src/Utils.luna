@@ -1,0 +1,80 @@
+import Std.Base
+import Std.Foreign
+import Std.Foreign.C.Value
+
+def log text:
+    if False then print text else None
+
+def bsonc symbol:
+    log ("Will lookup " + symbol)
+    lookupSymbol "bson-1.0" symbol
+
+def mongoc symbol: 
+    log ("Will lookup " + symbol)
+    lookupSymbol "libmongoc-1.0" symbol
+
+def mongoh symbol: 
+    log ("Will lookup " + symbol)
+    lookupSymbol "MongoHelper" symbol
+
+def bson_free ptr: 
+    funptr = bsonc "bson_free"
+    funptr.call None [ptr.toCArg]
+
+# TODO: [MU] make sure that some lazy evaluation thing does not break it
+def bracket before after item:
+    sth = before
+    result = runError (item sth)
+    after sth
+    case result of
+        Left error: throw error
+        Right value: value
+
+# :: Text -> (CArg -> a) -> a
+def withStringCArg stringArgument method:
+    bracket (CString . fromText stringArgument) (_.free) (method _.toCArg)
+
+def singleStringMethod ptr ret method stringArgument:
+    withStringCArg stringArgument strArg: 
+        method.call ret [ptr.toCArg, strArg]
+
+def twoStringMethod ptr ret method stringArgument stringArgument2:
+    withStringCArg stringArgument strArg:
+        withStringCArg stringArgument2 strArg2:
+            method.call ret [ptr.toCArg, strArg, strArg2]
+
+def readTextUnownedFromCStr ptr:
+    (CString.fromRetType ptr).toText
+
+# Name is slightly misleading - bson refers just to the fact that memory for this string is managed by bsonc
+def consumeBsonStringToText ptr:
+    result_cstr = CString.fromRetType ptr
+    text = result_cstr.toText
+    bson_free ptr
+    text
+
+# FIXME: [MU] This function intentionally ignores destructor, because ManagedPointer is awfully broken
+#             and would otherwise call destructor for objects still in use. 
+#             To be changed when the bug is fixed: https://github.com/luna/luna/issues/212
+def managedPtr destructor ptr:
+    ManagedPointer None . fromPointer (mongoh "mongoh_do_nothing") ptr
+
+# Should be called when Mongo Helper library returned error-signalizing value.
+# This function throw -- whenever possible, obtaining the proper error message
+# from the library.
+def reportError:
+    getLastError = mongoh "mongoh_get_error"
+    error = getLastError.call (Pointer CChar) []
+    throw case error.isNull of 
+            True:  "No error information"
+            False: (readTextUnownedFromCStr error.ptr)
+
+
+def test_bracket:
+    def beforr:
+        print "before"
+        "50"
+    def riskyOperation arg:
+        print "doing risky thing"
+        throw "ajajaj"
+    bracket (beforr) (arg: print ("After " + arg)) riskyOperation

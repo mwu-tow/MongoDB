@@ -3,103 +3,8 @@ import Std.Base
 import Std.Foreign
 import Std.Foreign.C.Value
 
-def log text:
-    if False then print text else None
-
-def bsonc symbol:
-    log ("Will lookup " + symbol)
-    lookupSymbol "bson-1.0" symbol
-
-def mongoc symbol: 
-    log ("Will lookup " + symbol)
-    lookupSymbol "libmongoc-1.0" symbol
-
-def mongoh symbol: 
-    log ("Will lookup " + symbol)
-    lookupSymbol "MongoHelper" symbol
-
-def bson_free ptr: 
-    funptr = bsonc "bson_free"
-    funptr.call None [ptr.toCArg]
-
-# TODO: [MU] make sure that some lazy evaluation thing does not break it
-def bracket before after item:
-    sth = before
-    result = runError (item sth)
-    after sth
-    case result of
-        Left error: throw error
-        Right value: value
-
-# :: Text -> (CArg -> a) -> a
-def withStringCArg stringArgument method:
-    bracket (CString . fromText stringArgument) (_.free) (method _.toCArg)
-
-def singleStringMethod ptr ret method stringArgument:
-    withStringCArg stringArgument strArg: 
-        method.call ret [ptr.toCArg, strArg]
-
-def twoStringMethod ptr ret method stringArgument stringArgument2:
-    withStringCArg stringArgument strArg:
-        withStringCArg stringArgument2 strArg2:
-            method.call ret [ptr.toCArg, strArg, strArg2]
-
-def readTextUnownedFromCStr ptr:
-    (CString.fromRetType ptr).toText
-
-# Name is slightly misleading - bson refers just to the fact that memory for this string is managed by bsonc
-def consumeBsonStringToText ptr:
-    result_cstr = CString.fromRetType ptr
-    text = result_cstr.toText
-    bson_free ptr
-    text
-
-# FIXME: [MU] This function intentionally ignores destructor, because ManagedPointer is awfully broken
-#             and would otherwise call destructor for objects still in use. 
-#             To be changed when the bug is fixed: https://github.com/luna/luna/issues/212
-def managedPtr destructor ptr:
-    ManagedPointer None . fromPointer (mongoh "mongoh_do_nothing") ptr
-
-# Named collection of documents, being a member of some database
-class Collection:
-    ptr :: ManagedPointer None
-
-    def get_name:
-        nameCStr = mongoc "mongoc_collection_get_name" . call (Pointer CChar) [self.ptr.toCArg]
-        readTextUnownedFromCStr nameCStr.ptr
-
-
-    # Takes a JSON object -- a document being inserted into the collection
-    def insertOne documentJson:
-        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_insert_one") documentJson.toText
-        case result.isNull of 
-            True: reportError
-            False: 
-                print (consumeBsonStringToText result.ptr)
-
-    def update_one selector updates:
-        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_update_one") selector.toText updates.toText
-        case result.isNull of 
-        True: 
-            reportError
-        False: 
-            consumeBsonStringToText result.ptr
-
-    # JSON -> [JSON]
-    # returns all documents in collection that match given query
-    def find_all query:
-        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_find_all") query.toText
-        case result.isNull of 
-            True: 
-                reportError
-            False: 
-                jsonResultsText = consumeBsonStringToText result.ptr
-                jsonResults = JSON.parse jsonResultsText
-                case jsonResults of
-                    JSONArray docs: docs
-                    _: throw "Collection.find: Invalid JSON result: expected JSON array"
-
-
+import MongoDB.Utils
+import MongoDB.Collection
 
 class Database:
     ptr :: ManagedPointer None
@@ -160,14 +65,19 @@ class MongoDB:
             managedHandle = managedPtr mongoc_client_destroy ptr
             Client managedHandle
 
-def reportError:
-    getLastError = mongoh "mongoh_get_error"
-    error = getLastError.call (Pointer CChar) []
-    case error.isNull of 
-            True:  throw "No error information"
-            False: throw (readTextUnownedFromCStr error.ptr)
-
 def main:
+    print "Main start"
+    MongoDB.init
+    client = MongoDB.new_client "mongodb://192.168.11.20:27017"
+    collection = client.get_collection "lunaDB" "lunaCollection"
+    result = collection.find_one('{}')
+    print ("Find one result: " + result.toText)
+    result = collection.delete_one (JSON.parse '{"hello": "world"}')
+    print ("Delete result: " + result.toText)
+    result = collection.find_all('{}')
+    print result
+
+def main2:
     MongoDB.init
     client = MongoDB.new_client "mongodb://192.168.11.20:27017"
     client.set_appname "lunawrapper"
@@ -189,18 +99,10 @@ def main:
     updateResult = collection.update_one findQuery ('{"$set": {"cos" : "nowego"}}')
     print ("Update result: " + updateResult.toText)
 
+    result = collection.find_one('{}')
+
     print ("Searching for documents with query " + findQuery.toText + "...")
     documents = collection.find_all findQuery
     print ("Found " + documents.length.toText + " documents:")
     documents.each doc:
         print (" - " + doc.toText)
-
-
-def test_bracket:
-    def beforr:
-        print "before"
-        "50"
-    def riskyOperation arg:
-        print "doing risky thing"
-        throw "ajajaj"
-    bracket (beforr) (arg: print ("After " + arg)) riskyOperation

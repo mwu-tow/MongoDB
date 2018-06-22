@@ -1,0 +1,61 @@
+import Std.Base
+import Std.Foreign
+import Std.Foreign.C.Value
+
+import MongoDB.Utils
+
+
+# helper for calling method that takes a pointer and a sequence of strings
+# returns a JSON document
+# :: Text -> SomePointer -> [Text] -> JSON
+def call_mongoh name ptr strArgs:
+    method = mongoh name
+    cstrArgs = strArgs.each (CString.fromText _.toText)
+    cstrArgs_CArgs = cstrArgs.each (_.toCArg)
+    result = method . call (Pointer CChar) ([ptr.toCArg]  + cstrArgs_CArgs)
+    cstrArgs.each (_.free)
+    case result.isNull of 
+        True: 
+            reportError
+        False: 
+            jsonResultsText = consumeBsonStringToText result.ptr
+            JSON.parse jsonResultsText
+
+# Named collection of documents, being a member of some database
+class Collection:
+    ptr :: ManagedPointer None
+
+    def get_name:
+        nameCStr = mongoc "mongoc_collection_get_name" . call (Pointer CChar) [self.ptr.toCArg]
+        readTextUnownedFromCStr nameCStr.ptr
+
+
+    # Takes a JSON object -- a document being inserted into the collection
+    def insertOne documentJson:
+        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_insert_one") documentJson.toText
+        case result.isNull of 
+            True: reportError
+            False: 
+                print (consumeBsonStringToText result.ptr)
+
+    def update_one selector updates:
+        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_update_one") selector.toText updates.toText
+        case result.isNull of 
+        True: 
+            reportError
+        False: 
+            consumeBsonStringToText result.ptr
+
+    # JSON -> [JSON]
+    # returns all documents in collection that match given query
+    def find_all query:
+        call_mongoh "mongoh_find_all" self.ptr [query] . asList
+
+    # JSON -> Maybe JSON
+    # returns any document in collection that matches given query or Nothing if there is no match
+    def find_one query:
+        call_mongoh "mongoh_find_one" self.ptr [query] . asList.head
+
+    def delete_one query:
+        call_mongoh "mongoh_delete_one" self.ptr [query]
+

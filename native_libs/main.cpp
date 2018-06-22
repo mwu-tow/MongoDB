@@ -84,6 +84,22 @@ extern "C"
 		return nullptr;
 	}
 
+	EXPORT const char* mongoh_update_one(mongoc_collection_t *collection, const char *queryJsonText, const char *updateJsonText)
+	{
+		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
+		if(!selectorQuery)
+			return nullptr;
+		const unique_bson_ptr update = jsonToBson(updateJsonText);
+		if(!update)
+			return nullptr;
+
+		bson_t reply;
+		if(callHandlingError("update one", &mongoc_collection_update_one, collection, selectorQuery.get(), update.get(), nullptr, &reply))
+			return bsonToJson(&reply);
+
+		return nullptr;
+	}
+
 	// use bson_strfreev on result
 	EXPORT char **mongoh_get_collection_names(mongoc_database_t *database)
 	{
@@ -93,6 +109,44 @@ extern "C"
 
 		return result;
 		//bson_strfreev(result);
+	}
+
+	// returns text json to be freed with bson_free
+	EXPORT char *mongoh_delete_one(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
+		if(!selectorQuery)
+			return nullptr;
+
+		bson_t reply;
+		if(callHandlingError("delete one", &mongoc_collection_delete_one, collection, selectorQuery.get(), nullptr, &reply))
+			return bsonToJson(&reply);
+
+		return nullptr;
+
+	}
+
+	// returns text json to be freed with bson_free
+	EXPORT char *mongoh_find_one(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr query = jsonToBson(queryJsonText);
+		if(!query)
+			return nullptr;
+
+		auto documentsToRet = bson_new(); // list of all matching documents
+		auto cursor = mongoc_collection_find_with_opts(collection, query.get(), nullptr, nullptr);
+
+		int i = 0;
+		const bson_t *doc;
+		if(mongoc_cursor_next(cursor, &doc)) 
+		{
+			bson_append_document(documentsToRet, std::to_string(i).c_str(), -1, doc);
+		}
+		mongoc_cursor_destroy (cursor);
+
+		auto ret = bson_array_as_json(documentsToRet, nullptr);
+		bson_destroy(documentsToRet);
+		return ret;
 	}
 
 	// returns text json to be freed with bson_free
