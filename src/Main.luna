@@ -70,12 +70,16 @@ def main:
     MongoDB.init
     client = MongoDB.new_client "mongodb://192.168.11.20:27017"
     collection = client.get_collection "lunaDB" "lunaCollection"
+    result = collection.insertOne (JSON.parse '{"hello": "world"}')
+    print ("Insert one result: " + result.toText)
     result = collection.find_one('{}')
     print ("Find one result: " + result.toText)
-    result = collection.delete_one (JSON.parse '{"hello": "world"}')
+    result = collection.delete_many (JSON.parse '{"hello": "world"}')
     print ("Delete result: " + result.toText)
     result = collection.find_all('{}')
-    print result
+    print ("All documents: " + result.toText)
+    result = collection.count('{}')
+    print ("Total count: " + result.toText)
 
 def main2:
     MongoDB.init

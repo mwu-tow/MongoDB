@@ -13,7 +13,7 @@
 
 using namespace std::literals;
 
-static std::string lastError;
+static thread_local std::string lastError;
 
 struct unique_bson_ptr
 {
@@ -29,17 +29,28 @@ auto callHandlingError(const std::string &errorMsg, Ptr ptr, Args... args)
 	bson_error_t error;
 	const auto ret = (*ptr)(args..., &error);
 
-	// we assume that returned type is either pointer or boolean.
+	// we assume that returned type is either pointer or boolean or int64_t.
 	using RetType = std::invoke_result_t<Ptr, Args..., bson_error_t*>;
-	static_assert(std::is_same_v<bool, RetType> || std::is_pointer_v<RetType>);
+	static_assert(std::is_same_v<bool, RetType> || std::is_pointer_v<RetType> || std::is_same_v<int64_t, RetType>);
 
-	// for pointers, nullptr means error
-	// for boolean, false means error
-	// in both cases bool conversion does desired job
-	if(ret)
-		lastError.clear();
+	if constexpr(std::is_same_v<int64_t, RetType>)
+	{
+		// int-based return signals error with negative values (like mongoc_collection_count)
+		if(ret >= 0)
+			lastError.clear();
+		else
+			lastError = "Failed to " + errorMsg + ": " + error.message;
+	}
 	else
-		lastError = "Failed to " + errorMsg + ": " + error.message;
+	{
+		// for pointers, nullptr means error
+		// for boolean, false means error
+		// in both cases bool conversion does desired job
+		if(ret)
+			lastError.clear();
+		else
+			lastError = "Failed to " + errorMsg + ": " + error.message;
+	}
 
 	return ret;
 }
@@ -112,6 +123,16 @@ extern "C"
 	}
 
 	// returns text json to be freed with bson_free
+	EXPORT int64_t mongoh_count(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
+		if(!selectorQuery)
+			return -1;
+
+		return callHandlingError("collection count", &mongoc_collection_count, collection, MONGOC_QUERY_NONE, selectorQuery.get(), 0, 0, nullptr);
+	}
+
+	// returns text json to be freed with bson_free
 	EXPORT char *mongoh_delete_one(mongoc_collection_t *collection, const char *queryJsonText)
 	{
 		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
@@ -124,6 +145,20 @@ extern "C"
 
 		return nullptr;
 
+	}
+
+	// returns text json to be freed with bson_free
+	EXPORT char *mongoh_delete_many(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
+		if(!selectorQuery)
+			return nullptr;
+
+		bson_t reply;
+		if(callHandlingError("delete many", &mongoc_collection_delete_many, collection, selectorQuery.get(), nullptr, &reply))
+			return bsonToJson(&reply);
+
+		return nullptr;
 	}
 
 	// returns text json to be freed with bson_free

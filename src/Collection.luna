@@ -4,26 +4,41 @@ import Std.Foreign.C.Value
 
 import MongoDB.Utils
 
-
-# helper for calling method that takes a pointer and a sequence of strings
-# returns a JSON document
-# :: Text -> SomePointer -> [Text] -> JSON
-def call_mongoh name ptr strArgs:
-    method = mongoh name
-    cstrArgs = strArgs.each (CString.fromText _.toText)
-    cstrArgs_CArgs = cstrArgs.each (_.toCArg)
-    result = method . call (Pointer CChar) ([ptr.toCArg]  + cstrArgs_CArgs)
-    cstrArgs.each (_.free)
+def consume_json result:
     case result.isNull of 
         True: 
             reportError
         False: 
-            jsonResultsText = consumeBsonStringToText result.ptr
-            JSON.parse jsonResultsText
+            JSON.parse (consumeBsonStringToText result.ptr)
+
+def consume_int result:
+    resultInt = result.toInt
+    if resultInt < 0 then reportError else resultInt
+
+def mongoh_consume consumer ret name ptr strArgs:
+    method = mongoh name
+    cstrArgs = strArgs.each (CString.fromText _.toText)
+    cstrArgs_CArgs = cstrArgs.each (_.toCArg)
+    result = method . call ret ([ptr.toCArg]  + cstrArgs_CArgs)
+    cstrArgs.each (_.free)
+    consumer result
+
+# Takes: name ptr strArgs
+# helper for calling method that takes a pointer and a sequence of strings
+# returns a JSON document
+# :: Text -> SomePointer -> [Text] -> JSON
+def mongoh_json: 
+    mongoh_consume consume_json (Pointer CChar)
+
+def mongoh_int:
+    mongoh_consume consume_int (CInt64)
 
 # Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
+
+    def count query:
+        mongoh_int "mongoh_count" self.ptr [query]
 
     def get_name:
         nameCStr = mongoc "mongoc_collection_get_name" . call (Pointer CChar) [self.ptr.toCArg]
@@ -49,13 +64,22 @@ class Collection:
     # JSON -> [JSON]
     # returns all documents in collection that match given query
     def find_all query:
-        call_mongoh "mongoh_find_all" self.ptr [query] . asList
+        mongoh_json "mongoh_find_all" self.ptr [query] . asList
 
     # JSON -> Maybe JSON
     # returns any document in collection that matches given query or Nothing if there is no match
     def find_one query:
-        call_mongoh "mongoh_find_one" self.ptr [query] . asList.head
+        mongoh_json "mongoh_find_one" self.ptr [query] . asList.head
 
+    # JSON -> Int
+    # deletes at most one document matching the query
+    # retuns deleted documents count (0-1)
     def delete_one query:
-        call_mongoh "mongoh_delete_one" self.ptr [query]
+        mongoh_json "mongoh_delete_one" self.ptr [query] . getInt "deletedCount"
+
+    # JSON -> Int
+    # deletes at most one document matching the query
+    # retuns deleted documents count (0-1)
+    def delete_many query:
+        mongoh_json "mongoh_delete_many" self.ptr [query] . getInt "deletedCount"
 
