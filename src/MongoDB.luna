@@ -1,0 +1,22 @@
+import Std.Foreign
+import Std.Foreign.C.Value
+
+import MongoDB.Utils
+import MongoDB.Client
+
+
+class MongoDB:
+    def init:
+        mongoc_init = mongoc "mongoc_init"
+        mongoc_init.call None []
+    def cleanup:
+        mongoc_cleanup = mongoc "mongoc_cleanup"
+        mongoc_cleanup.call None []
+
+    def new_client uri:
+        withStringCArg uri (uri_cstr):
+            mongoc_client_new = mongoc "mongoc_client_new"
+            mongoc_client_destroy = mongoc "mongoc_client_destroy"
+            ptr = mongoc_client_new.call (Pointer None)  [uri_cstr]
+            managedHandle = managedPtr mongoc_client_destroy ptr
+            Client managedHandle

@@ -3,74 +3,18 @@ import Std.Base
 import Std.Foreign
 import Std.Foreign.C.Value
 
-import MongoDB.Utils
 import MongoDB.Collection
+import MongoDB.Database
+import MongoDB.Client
+import MongoDB.MongoDB
 
-class Database:
-    ptr :: ManagedPointer None
-    def get_name:
-        nameCStr = mongoc "mongoc_database_get_name" . call (Pointer CChar) [self.ptr.toCArg]
-        readTextUnownedFromCStr nameCStr.ptr
-    def get_collection_names:
-        bson_strfreev = bsonc "bson_strfreev"
-        mongoh_get_collection_names = mongoh "mongoh_get_collection_names"
-        result = mongoh_get_collection_names.call (Pointer (Pointer CChar)) [self.ptr.toCArg]
-        case result.isNull of 
-            True: 
-                reportError
-            False: 
-                nta = NullTerminatedArrayVal result
-                listOfNames = nta.toList.each (ptr: (CString.fromRetType ptr.ptr).toText)
-                bson_strfreev.call None [result.toCArg]
-                listOfNames
-
-class Client:
-    ptr :: ManagedPointer None
-
-
-    def get_collection dbname collectionName:
-        mongoc_collection_destroy = mongoc "mongoc_collection_destroy"
-        collectionHandle = twoStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_collection") dbname collectionName
-        managedCollectionHandle = managedPtr mongoc_collection_destroy collectionHandle
-        Collection managedCollectionHandle
-
-    def set_appname: 
-        singleStringMethod self.ptr CInt8 (mongoc "mongoc_client_set_appname")
-
-    def get_database dbname: 
-        mongoc_database_destroy = mongoc "mongoc_database_destroy"
-        dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
-        Database (managedPtr mongoc_database_destroy dbHandle)
-
-    def simple_command dbname commandJson:
-        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText
-        case result.isNull of 
-            True: reportError
-            False: 
-                print (consumeBsonStringToText result.ptr)
-
-class MongoDB:
-    def init:
-        mongoc_init = mongoc "mongoc_init"
-        mongoc_init.call None []
-    def cleanup:
-        mongoc_cleanup = mongoc "mongoc_cleanup"
-        mongoc_cleanup.call None []
-
-    def new_client uri:
-        withStringCArg uri (uri_cstr):
-            mongoc_client_new = mongoc "mongoc_client_new"
-            mongoc_client_destroy = mongoc "mongoc_client_destroy"
-            ptr = mongoc_client_new.call (Pointer None)  [uri_cstr]
-            managedHandle = managedPtr mongoc_client_destroy ptr
-            Client managedHandle
 
 def main:
     print "Main start"
     MongoDB.init
     client = MongoDB.new_client "mongodb://192.168.11.20:27017"
     collection = client.get_collection "lunaDB" "lunaCollection"
-    result = collection.insertOne (JSON.parse '{"hello": "world"}')
+    result = collection.insert_one (JSON.parse '{"hello": "world"}')
     print ("Insert one result: " + result.toText)
     result = collection.find_one('{}')
     print ("Find one result: " + result.toText)
@@ -94,7 +38,7 @@ def main2:
     wrongCommandJSON = JSON.parse '{"pung": 1}'
     print (runError (client.simple_command "admin" wrongCommandJSON))
     collection = client.get_collection "lunaDB" "lunaCollection"
-    collection.insertOne (JSON.parse '{"hello": "world"}')
+    collection.insert_one (JSON.parse '{"hello": "world"}')
     print ("Database name is " + db.get_name)
     print ("Collection name is " + collection.get_name)
     print (runError (collection.insertOne  (JSON.parse '{"hello": world}')))

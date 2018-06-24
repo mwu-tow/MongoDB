@@ -46,7 +46,7 @@ class Collection:
 
 
     # Takes a JSON object -- a document being inserted into the collection
-    def insertOne documentJson:
+    def insert_one documentJson:
         result = singleStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_insert_one") documentJson.toText
         case result.isNull of 
             True: reportError

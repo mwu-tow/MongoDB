@@ -1,0 +1,32 @@
+import Std.Base
+import Std.Foreign
+import Std.Foreign.C.Value
+
+import MongoDB.Collection
+import MongoDB.Database
+import MongoDB.Utils
+
+class Client:
+    ptr :: ManagedPointer None
+
+
+    def get_collection dbname collectionName:
+        mongoc_collection_destroy = mongoc "mongoc_collection_destroy"
+        collectionHandle = twoStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_collection") dbname collectionName
+        managedCollectionHandle = managedPtr mongoc_collection_destroy collectionHandle
+        Collection managedCollectionHandle
+
+    def set_appname: 
+        singleStringMethod self.ptr CInt8 (mongoc "mongoc_client_set_appname")
+
+    def get_database dbname: 
+        mongoc_database_destroy = mongoc "mongoc_database_destroy"
+        dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
+        Database (managedPtr mongoc_database_destroy dbHandle)
+
+    def simple_command dbname commandJson:
+        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText
+        case result.isNull of 
+            True: reportError
+            False: 
+                print (consumeBsonStringToText result.ptr)

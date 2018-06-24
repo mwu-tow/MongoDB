@@ -1,0 +1,76 @@
+# MongoDB bindings for Luna
+
+
+## Purpose
+This project is a library with bindings allowing to use MongoDB from [Luna programming language](https://www.luna-lang.org/). 
+
+## Project structure
+It contains two subprojects:
+* `MongoDB` Luna library;
+* `MongoHelper` C++ library.
+
+## Third-party dependencies
+Third party dependencies include:
+* `libbson` — C library with utilities for handling BSON documents;
+* `libmongoc` — MongoDB C driver.
+
+Please refer to [MongoDB C Driver](http://mongoc.org/libmongoc/current/installing.html) documentation pages for installation instructions for all platforms.
+
+Obviously, to use the bindings, a running [MongoDB](https://www.mongodb.com/) server will be needed.
+
+## Build & Install
+1. Procure [`luna` compiler](https://github.com/luna/luna).
+2. Make sure that third-party dependencies are [installed]((http://mongoc.org/libmongoc/current/installing.html)).
+3. Build `MongoHelper`, place binary under `PATH` or in the repo under `native_libs/$PLATFORM` subdirectory, as described in the [Luna Book](https://luna-lang.gitbooks.io/docs/content/calling-c-functions.html).
+4. Call `luna path/to/repo`.
+
+## Tutorial
+
+Please see the usage in [Main.luna](src/Main.luna).
+
+## Known issues
+* Bindings are still rudimentary and experimental.
+* Some APIs are not consistent or not well-thought enough.
+* Luna's `ManagedPointer a` is [not reliable yet](https://github.com/luna/luna/issues/212), so until the issue if fixed, resource leaks are unevitable.
+* Tutorial is just a set of random pieces of code I used when developing the library.
+* Missing proper build instructions / build system for `MongoHelper`.
+* Checked only on Windows.
+* Devise proper naming scheme for MongoDB C Driver binaries and/or keep them on the repo.
+* Build & Install steps are actually for running my "tests", not use the bindings itself.
+
+## API Reference
+All public interface of the library is described below. Each class is in a module with its name. For example, to use `Client` class you'll need `import MongoDB.Client`. All other modules and APIs should be treated as internal to the library and not used by external code.
+
+### class `MongoDB`
+
+This class contains a few methods that are "global" for the Mongo bindings. Its objects can be freely constructed using the `MongoDB` constructor.
+
+#### Methods:
+* `init :: None` — should be called before making any other call into this library. Initializes a global state of the underlying C driver.
+* `cleanup :: None` — should be called when there will be no more calls into this library. Releases all the resources allocated by the driver. **NOTE: it is not allowed to call `init` once again after `cleanup`!**
+* `new_client uri :: Text -> Client` — creates a new `Client` object representing a MongoDB connection. `uri` is a `Text` parameter, for example `"mongodb://192.168.11.20:27017"`. Please refer to the [MongoDB documentation](https://docs.mongodb.com/manual/reference/connection-string/?_ga=2.226838301.1022409252.1529405873-838949899.1529405873) for more information about supported URI syntax.
+
+### class `Client`
+This class represents a MongoDB connection. It is typically obtained by a `MongoDB.new_client "uri"` call. It is reccemended to set the application name (`set_appname`) right after creating the client.
+
+#### Methods:
+* `set_appname name :: Text -> None` — takes a name that will be sent to the server as part of an initial handshake. Should be called before initializaing connection.
+* `get_collection databaseName collectionName :: Text -> Text -> Collection` — creates a `Collection` object providing access to the collection. 
+* `get_database databaseName :: Text -> Database` — creates an object accessing database with a given name.
+* `simple_command databaseName commandJson :: Text -> JSON -> JSON` — runs the command on database under given name, returning the first document from resulting cursor. Please refer to the [MongoDB documentation](https://docs.mongodb.com/manual/reference/command/?_ga=2.258977546.1022409252.1529405873-838949899.1529405873) for more information on database commands.
+
+### class `Database`
+The object of this class allows performing actions on a specific MongoDB database. Note that it is just a handle to the database, not the collection of documents itself.
+
+* `get_name :: Text` — fetches the database name.
+* `get_collection_names :: [Text]` — fetches names of all the collections contained by the database.
+
+### class `Collection`
+* `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
+* `get_name :: Text` — fetches the name of the collection.
+* `insert_one document :: JSON -> None` — inserts given document into the dollcetion.
+* `update_one selector updates :: JSON -> JSON -> JSON` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax.
+* `find_all query :: JSON -> [JSON]` — retrieves all documents in the collection matching to `query`.
+* `find_one query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
+* `delete_one query :: JSON -> Int` — looks for a document matching the `query` and deletes it if found. Returns the deleted documents count (0 or 1).
+* `def delete_many query :: JSON -> Int` — deletes all documents matching the query. Returns deleted documents count.
