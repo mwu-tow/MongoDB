@@ -19,14 +19,4 @@ class Database:
         nameCStr = mongoc "mongoc_database_get_name" . call (Pointer CChar) [self.ptr.toCArg]
         readTextUnownedFromCStr nameCStr.ptr
     def collectionNames:
-        bson_strfreev = bsonc "bson_strfreev"
-        mongoh_get_collection_names = mongoh "mongoh_get_collection_names"
-        result = mongoh_get_collection_names.call (Pointer (Pointer CChar)) [self.ptr.toCArg]
-        case result.isNull of 
-            True: 
-                reportError
-            False: 
-                nta = NullTerminatedArrayVal result
-                listOfNames = nta.toList.each (ptr: (CString.fromRetType ptr.ptr).toText)
-                bson_strfreev.call None [result.toCArg]
-                listOfNames
+        callMongohReturningTexts "mongoh_get_collection_names" [self.ptr.toCArg]

@@ -57,6 +57,7 @@ This class represents a MongoDB connection. It is typically obtained by a `Mongo
 * `setAppname name :: Text -> None` — takes a name that will be sent to the server as part of an initial handshake. Should be called before initializaing connection.
 * `collection databaseName collectionName :: Text -> Text -> Collection` — creates a `Collection` object providing access to the collection. 
 * `database databaseName :: Text -> Database` — creates an object accessing database with a given name.
+* `databaseNames :: [Text]` — queries the server for the list known database names.
 * `defaultDatabase :: Maybe Database` — creates an object accessing the default database. The database in such case is inferred from the URI — e.g. when client's URI was `mongodb://host/db_name` then default database name is `db_name`. If URI did not have database name specified (like in `mongodb://host/`) then `Nothing` is returned.
 * `simpleCommand databaseName commandJson :: Text -> JSON -> JSON` — runs the command on database under given name, returning the first document from resulting cursor. Please refer to the [MongoDB documentation](https://docs.mongodb.com/manual/reference/command/?_ga=2.258977546.1022409252.1529405873-838949899.1529405873) for more information on database commands.
 

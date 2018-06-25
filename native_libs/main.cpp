@@ -227,6 +227,13 @@ extern "C"
 		return nullptr;
 	}
 
+
+	// use bson_strfreev on result
+	EXPORT char **mongoh_get_database_names(mongoc_client_t *client)
+	{
+		return callHandlingError("get database names", mongoc_client_get_database_names_with_opts, client, nullptr);
+	}
+
 	EXPORT void foo()
 	{
 		std::cout << "Hello from C++" << std::endl;

@@ -8,12 +8,19 @@ import MongoDB.Database
 import MongoDB.Client
 import MongoDB.MongoDB
 
-
 def main:
+    MongoDB.init
+    client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
+    print (client.database "lunaDB" . collectionNames)
+
+
+def main3:
     print "Main start"
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     print client.defaultDatabase.get.name
+    print client.databaseNames
+    print (client.database "lunaDB" . collectionNames)
     collection = client.collection "lunaDB" "lunaCollection"
     result = collection.insertOne (JSON.parse '{"hello": "world"}')
     print ("Insert one result: " + result.toText)

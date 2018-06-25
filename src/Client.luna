@@ -23,6 +23,9 @@ class Client:
         dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
         databaseFromPointer dbHandle
 
+    def databaseNames:
+        callMongohReturningTexts "mongoh_get_database_names" [self.ptr.toCArg]
+
     def defaultDatabase: 
         mongoc_client_get_default_database = mongoc "mongoc_client_get_default_database"
         dbHandle = mongoc_client_get_default_database.call (Pointer None) [self.ptr.toCArg]

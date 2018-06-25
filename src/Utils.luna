@@ -20,12 +20,33 @@ def mongoh symbol:
 def bson_free ptr: 
     funptr = bsonc "bson_free"
     funptr.call None [ptr.toCArg]
+    
+# assumes null terminated array of strings and calls bson_strfreev
+def callMongohReturningTexts methodName args:
+    bson_strfreev = bsonc "bson_strfreev"
+    method = mongoh methodName
+    result = method.call (Pointer (Pointer CChar)) args
+    case result.isNull of 
+        True: 
+            reportError
+        False:
+            nta = NullTerminatedArrayVal result
+            listOfNames = nta.toList.each (ptr: (CString.fromRetType ptr.ptr).toText)
+            bson_strfreev.call None [result.toCArg]
+            listOfNames
 
 # TODO: [MU] make sure that some lazy evaluation thing does not break it
 def bracket before after item:
     sth = before
     result = runError (item sth)
     after sth
+    case result of
+        Left error: throw error
+        Right value: value
+
+def finally runAlways runFirst:
+    result = runError runFirst
+    runAlways
     case result of
         Left error: throw error
         Right value: value
