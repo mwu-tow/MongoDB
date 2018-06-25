@@ -11,10 +11,9 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
-    print (client.database "lunaDB" . hasCollection "moje")
-    print (client.database "lunaDB" . hasCollection "mojee")
-    client2 = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
-    print (client2.database "lunaDB" . hasCollection "moje")
+    print (client.database "lunaddDB" . drop)
+    client = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
+    print (client.database "lunaddDB" . drop)
 
 def main3:
     print "Main start"
@@ -23,6 +22,8 @@ def main3:
     print client.defaultDatabase.get.name
     print client.databaseNames
     print (client.database "lunaDB" . collectionNames)
+    print (client.database "lunaDB" . hasCollection "moje")
+    print (client.database "lunaDB" . hasCollection "mojee")
     collection = client.collection "lunaDB" "lunaCollection"
     result = collection.insertOne (JSON.parse '{"hello": "world"}')
     print ("Insert one result: " + result.toText)
@@ -34,6 +35,9 @@ def main3:
     print ("All documents: " + result.toText)
     result = collection.count('{}')
     print ("Total count: " + result.toText)
+    
+    client2 = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
+    print (client2.database "lunaDB" . hasCollection "moje")
 
 def main2:
     MongoDB.init

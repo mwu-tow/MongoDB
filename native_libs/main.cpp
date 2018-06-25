@@ -110,6 +110,13 @@ extern "C"
 		//bson_strfreev(result);
 	}
 
+	// use bson_strfreev on result
+	EXPORT bool mongoh_database_drop(mongoc_database_t *database)
+	{
+		return callHandlingError("get collection names", mongoc_database_drop, database);
+	}
+
+
 	// returns text json to be freed with bson_free
 	EXPORT int64_t mongoh_count(mongoc_collection_t *collection, const char *queryJsonText)
 	{

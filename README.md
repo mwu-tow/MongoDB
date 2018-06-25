@@ -64,6 +64,7 @@ This class represents a MongoDB connection. It is typically obtained by a `Mongo
 ### class `Database`
 The object of this class allows performing actions on a specific MongoDB database. Note that it is just a handle to the database, not the collection of documents itself.
 * `collectionNames :: [Text]` — fetches names of all the collections contained by the database.
+* `drop :: None` — drops the database from the server.
 * `hasCollection name :: Text -> Bool` — checks if collection with a given name exists in the database
 * `name :: Text` — fetches the database name.
 
