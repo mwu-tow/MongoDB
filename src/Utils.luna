@@ -90,6 +90,12 @@ def reportError:
             True:  "No error information"
             False: (readTextUnownedFromCStr error.ptr)
 
+def reportIfError value:
+    getLastError = mongoh "mongoh_get_error"
+    error = getLastError.call (Pointer CChar) []
+    case error.isNull of 
+            True: value
+            False: throw (readTextUnownedFromCStr error.ptr)
 
 def test_bracket:
     def beforr:

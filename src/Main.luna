@@ -11,8 +11,10 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
-    print (client.database "lunaDB" . collectionNames)
-
+    print (client.database "lunaDB" . hasCollection "moje")
+    print (client.database "lunaDB" . hasCollection "mojee")
+    client2 = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
+    print (client2.database "lunaDB" . hasCollection "moje")
 
 def main3:
     print "Main start"

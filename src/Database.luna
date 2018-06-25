@@ -12,7 +12,7 @@ def databaseFromPointer ptr:
         True: throw "missing database"
         False: 
             Database (managedPtr mongoc_database_destroy ptr)
-
+    
 class Database:
     ptr :: ManagedPointer None
     def name:
@@ -20,3 +20,7 @@ class Database:
         readTextUnownedFromCStr nameCStr.ptr
     def collectionNames:
         callMongohReturningTexts "mongoh_get_collection_names" [self.ptr.toCArg]
+    def hasCollection name:
+        result = singleStringMethod self.ptr (CInt8) (mongoh "mongoh_has_collection") name
+        reportIfError result
+        

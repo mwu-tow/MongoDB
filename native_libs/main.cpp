@@ -27,30 +27,13 @@ template<typename Ptr, typename ...Args>
 auto callHandlingError(const std::string &errorMsg, Ptr ptr, Args... args)
 {
 	bson_error_t error;
+	error.code = 0;
+
 	const auto ret = (*ptr)(args..., &error);
-
-	// we assume that returned type is either pointer or boolean or int64_t.
-	using RetType = std::invoke_result_t<Ptr, Args..., bson_error_t*>;
-	static_assert(std::is_same_v<bool, RetType> || std::is_pointer_v<RetType> || std::is_same_v<int64_t, RetType>);
-
-	if constexpr(std::is_same_v<int64_t, RetType>)
-	{
-		// int-based return signals error with negative values (like mongoc_collection_count)
-		if(ret >= 0)
-			lastError.clear();
-		else
-			lastError = "Failed to " + errorMsg + ": " + error.message;
-	}
+	if(error.code == 0)
+		lastError.clear();
 	else
-	{
-		// for pointers, nullptr means error
-		// for boolean, false means error
-		// in both cases bool conversion does desired job
-		if(ret)
-			lastError.clear();
-		else
-			lastError = "Failed to " + errorMsg + ": " + error.message;
-	}
+		lastError = "Failed to " + errorMsg + ": " + error.message;
 
 	return ret;
 }
@@ -109,6 +92,11 @@ extern "C"
 			return bsonToJson(&reply);
 
 		return nullptr;
+	}
+
+	EXPORT bool mongoh_has_collection(mongoc_database_t *database, const char *name)
+	{
+		return callHandlingError("has collection", mongoc_database_has_collection, database, name);
 	}
 
 	// use bson_strfreev on result

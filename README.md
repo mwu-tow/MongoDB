@@ -63,9 +63,9 @@ This class represents a MongoDB connection. It is typically obtained by a `Mongo
 
 ### class `Database`
 The object of this class allows performing actions on a specific MongoDB database. Note that it is just a handle to the database, not the collection of documents itself.
-
-* `name :: Text` — fetches the database name.
 * `collectionNames :: [Text]` — fetches names of all the collections contained by the database.
+* `hasCollection name :: Text -> Bool` — checks if collection with a given name exists in the database
+* `name :: Text` — fetches the database name.
 
 ### class `Collection`
 * `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
@@ -75,4 +75,4 @@ The object of this class allows performing actions on a specific MongoDB databas
 * `findAll query :: JSON -> [JSON]` — retrieves all documents in the collection matching to `query`.
 * `findOne query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
 * `deleteOne query :: JSON -> Int` — looks for a document matching the `query` and deletes it if found. Returns the deleted documents count (0 or 1).
-* `def deleteMany query :: JSON -> Int` — deletes all documents matching the query. Returns deleted documents count.
+* `deleteMany query :: JSON -> Int` — deletes all documents matching the query. Returns deleted documents count.
