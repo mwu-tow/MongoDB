@@ -6,10 +6,10 @@ import MongoDB.Collection
 
 class Database:
     ptr :: ManagedPointer None
-    def get_name:
+    def name:
         nameCStr = mongoc "mongoc_database_get_name" . call (Pointer CChar) [self.ptr.toCArg]
         readTextUnownedFromCStr nameCStr.ptr
-    def get_collection_names:
+    def collectionNames:
         bson_strfreev = bsonc "bson_strfreev"
         mongoh_get_collection_names = mongoh "mongoh_get_collection_names"
         result = mongoh_get_collection_names.call (Pointer (Pointer CChar)) [self.ptr.toCArg]

@@ -13,7 +13,7 @@ class MongoDB:
         mongoc_cleanup = mongoc "mongoc_cleanup"
         mongoc_cleanup.call None []
 
-    def new_client uri:
+    def newClient uri:
         withStringCArg uri (uri_cstr):
             mongoc_client_new = mongoc "mongoc_client_new"
             mongoc_client_destroy = mongoc "mongoc_client_destroy"

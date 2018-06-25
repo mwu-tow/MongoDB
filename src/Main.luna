@@ -12,45 +12,45 @@ import MongoDB.MongoDB
 def main:
     print "Main start"
     MongoDB.init
-    client = MongoDB.new_client "mongodb://192.168.11.20:27017"
-    collection = client.get_collection "lunaDB" "lunaCollection"
-    result = collection.insert_one (JSON.parse '{"hello": "world"}')
+    client = MongoDB.newClient "mongodb://192.168.11.20:27017"
+    collection = client.collection "lunaDB" "lunaCollection"
+    result = collection.insertOne (JSON.parse '{"hello": "world"}')
     print ("Insert one result: " + result.toText)
-    result = collection.find_one('{}')
+    result = collection.findOne('{}')
     print ("Find one result: " + result.toText)
-    result = collection.delete_many (JSON.parse '{"hello": "world"}')
+    result = collection.deleteMany (JSON.parse '{"hello": "world"}')
     print ("Delete result: " + result.toText)
-    result = collection.find_all('{}')
+    result = collection.findAll('{}')
     print ("All documents: " + result.toText)
     result = collection.count('{}')
     print ("Total count: " + result.toText)
 
 def main2:
     MongoDB.init
-    client = MongoDB.new_client "mongodb://192.168.11.20:27017"
-    client.set_appname "lunawrapper"
+    client = MongoDB.newClient "mongodb://192.168.11.20:27017"
+    client.setAppname "lunawrapper"
 
-    db = client.get_database "lunaDB"
-    print db.get_collection_names
+    db = client.database "lunaDB"
+    print db.collectionNames
 
     pingCommandJSON = JSON.parse '{"ping": 1}'
-    client.simple_command "admin" pingCommandJSON
+    client.simpleCommand "admin" pingCommandJSON
     wrongCommandJSON = JSON.parse '{"pung": 1}'
-    print (runError (client.simple_command "admin" wrongCommandJSON))
-    collection = client.get_collection "lunaDB" "lunaCollection"
-    collection.insert_one (JSON.parse '{"hello": "world"}')
-    print ("Database name is " + db.get_name)
-    print ("Collection name is " + collection.get_name)
+    print (runError (client.simpleCommand "admin" wrongCommandJSON))
+    collection = client.collection "lunaDB" "lunaCollection"
+    collection.insertOne (JSON.parse '{"hello": "world"}')
+    print ("Database name is " + db.name)
+    print ("Collection name is " + collection.name)
     print (runError (collection.insertOne  (JSON.parse '{"hello": world}')))
     findQuery = JSON.parse '{"hello" : "s"}'
 
-    updateResult = collection.update_one findQuery ('{"$set": {"cos" : "nowego"}}')
+    updateResult = collection.updateOne findQuery ('{"$set": {"cos" : "nowego"}}')
     print ("Update result: " + updateResult.toText)
 
-    result = collection.find_one('{}')
+    result = collection.findOne('{}')
 
     print ("Searching for documents with query " + findQuery.toText + "...")
-    documents = collection.find_all findQuery
+    documents = collection.findAll findQuery
     print ("Found " + documents.length.toText + " documents:")
     documents.each doc:
         print (" - " + doc.toText)
