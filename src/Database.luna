@@ -21,8 +21,15 @@ class Database:
     def collectionNames:
         callMongohReturningTexts "mongoh_get_collection_names" [self.ptr.toCArg]
     def drop:
-        result = mongoh "mongoh_database_drop" . call (CInt8) [self.ptr.toCArg] . toInt
-        if result == 0 then reportError else None
+        callMongohReturningTrue "mongoh_database_drop" [self.ptr.toCArg]
+
+    def collection name:
+        collectionHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_database_get_collection") name
+        collectionFromPointer collectionHandle
+
+    def createCollection name:
+        collectionHandle = singleStringMethod self.ptr (Pointer None) (mongoh "mongoh_database_create_collection") name
+        if collectionHandle.isNull then reportError else collectionFromPointer collectionHandle
 
     def hasCollection name:
         result = singleStringMethod self.ptr (CInt8) (mongoh "mongoh_has_collection") name

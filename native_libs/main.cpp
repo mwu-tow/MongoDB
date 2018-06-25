@@ -110,10 +110,15 @@ extern "C"
 		//bson_strfreev(result);
 	}
 
+	EXPORT mongoc_collection_t *mongoh_database_create_collection(mongoc_database_t *database, const char *name)
+	{
+		return callHandlingError(__FUNCTION__, mongoc_database_create_collection, database, name, nullptr);
+	}
+
 	// use bson_strfreev on result
 	EXPORT bool mongoh_database_drop(mongoc_database_t *database)
 	{
-		return callHandlingError("get collection names", mongoc_database_drop, database);
+		return callHandlingError(__FUNCTION__, mongoc_database_drop, database);
 	}
 
 
@@ -126,6 +131,13 @@ extern "C"
 
 		return callHandlingError("collection count", &mongoc_collection_count, collection, MONGOC_QUERY_NONE, selectorQuery.get(), 0, 0, nullptr);
 	}
+
+	// use bson_strfreev on result
+	EXPORT bool mongoh_collection_drop(mongoc_collection_t *collection)
+	{
+		return callHandlingError(__FUNCTION__, mongoc_collection_drop, collection);
+	}
+
 
 	// returns text json to be freed with bson_free
 	EXPORT char *mongoh_delete_one(mongoc_collection_t *collection, const char *queryJsonText)

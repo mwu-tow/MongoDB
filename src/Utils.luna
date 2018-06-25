@@ -35,6 +35,16 @@ def callMongohReturningTexts methodName args:
             bson_strfreev.call None [result.toCArg]
             listOfNames
 
+# assumes that false means error
+def callMongohReturningTrue methodName args:
+    result = mongoh methodName . call (CInt8) args . toInt
+    if result == 0 then reportError else None
+
+# assume null means error
+def callMongohReturningPointer methodName args:
+    result = mongoh methodName . call (Pointer None) args
+    if result.isNull then reportError else result
+
 # TODO: [MU] make sure that some lazy evaluation thing does not break it
 def bracket before after item:
     sth = before

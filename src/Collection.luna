@@ -33,12 +33,20 @@ def mongoh_json:
 def mongoh_int:
     mongoh_consume consume_int (CInt64)
 
+def collectionFromPointer pointer: 
+    mongoc_collection_destroy = mongoc "mongoc_collection_destroy"
+    managedCollectionHandle = managedPtr mongoc_collection_destroy pointer
+    Collection managedCollectionHandle
+
 # Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
 
     def count query:
         mongoh_int "mongoh_count" self.ptr [query]
+
+    def drop:
+        callMongohReturningTrue "mongoh_collection_drop" [self.ptr.toCArg]
 
     def name:
         nameCStr = mongoc "mongoc_collection_get_name" . call (Pointer CChar) [self.ptr.toCArg]

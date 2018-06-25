@@ -64,12 +64,15 @@ This class represents a MongoDB connection. It is typically obtained by a `Mongo
 ### class `Database`
 The object of this class allows performing actions on a specific MongoDB database. Note that it is just a handle to the database, not the collection of documents itself.
 * `collectionNames :: [Text]` — fetches names of all the collections contained by the database.
+* `collection name :: Collection` — creates a `Collection` control object for collection with a given name. Note: this does not actually create the collection if not present (unless collection is written to later). To immediately create collection please use `createCollection` method. 
+* `createCollection name :: Collection` — creates a `Collection` in the database.
 * `drop :: None` — drops the database from the server.
 * `hasCollection name :: Text -> Bool` — checks if collection with a given name exists in the database
 * `name :: Text` — fetches the database name.
 
 ### class `Collection`
 * `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
+* `drop :: None` — drops the collection, including all associated indexes.
 * `name :: Text` — fetches the name of the collection.
 * `insertOne document :: JSON -> None` — inserts given document into the dollcetion.
 * `updateOne selector updates :: JSON -> JSON -> JSON` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax.

@@ -11,10 +11,8 @@ class Client:
 
 
     def collection dbname collectionName:
-        mongoc_collection_destroy = mongoc "mongoc_collection_destroy"
         collectionHandle = twoStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_collection") dbname collectionName
-        managedCollectionHandle = managedPtr mongoc_collection_destroy collectionHandle
-        Collection managedCollectionHandle
+        collectionFromPointer collectionHandle
 
     def setAppname: 
         singleStringMethod self.ptr CInt8 (mongoc "mongoc_client_set_appname")

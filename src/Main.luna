@@ -11,9 +11,15 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
-    print (client.database "lunaddDB" . drop)
-    client = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
-    print (client.database "lunaddDB" . drop)
+    db = client.database "lunaDB"
+    print db.collectionNames
+    col2 = db.createCollection "testy3"
+    col = db.collection "testy2"
+    print db.collectionNames
+    print (col.insertOne (JSON.parse '{"hello": "world"}'))
+    print db.collectionNames
+    print col.drop
+    print db.collectionNames
 
 def main3:
     print "Main start"
