@@ -19,11 +19,15 @@ class Client:
     def setAppname: 
         singleStringMethod self.ptr CInt8 (mongoc "mongoc_client_set_appname")
 
-    def database dbname: 
-        mongoc_database_destroy = mongoc "mongoc_database_destroy"
+    def database dbname:
         dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
-        Database (managedPtr mongoc_database_destroy dbHandle)
+        databaseFromPointer dbHandle
 
+    def defaultDatabase: 
+        mongoc_client_get_default_database = mongoc "mongoc_client_get_default_database"
+        dbHandle = mongoc_client_get_default_database.call (Pointer None) [self.ptr.toCArg]
+        if dbHandle.isNull then Nothing else Just (databaseFromPointer dbHandle)
+    
     def simpleCommand dbname commandJson:
         result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText
         case result.isNull of 

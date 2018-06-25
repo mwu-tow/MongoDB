@@ -2,7 +2,16 @@ import Std.Base
 import Std.Foreign
 import Std.Foreign.C.Value
 
+import MongoDB.Utils
 import MongoDB.Collection
+
+# Pointer None -> Database
+def databaseFromPointer ptr:
+    mongoc_database_destroy = mongoc "mongoc_database_destroy"
+    case ptr.isNull of 
+        True: throw "missing database"
+        False: 
+            Database (managedPtr mongoc_database_destroy ptr)
 
 class Database:
     ptr :: ManagedPointer None
