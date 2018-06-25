@@ -38,6 +38,14 @@ def collectionFromPointer pointer:
     managedCollectionHandle = managedPtr mongoc_collection_destroy pointer
     Collection managedCollectionHandle
 
+class RenamePolicy:
+    DontDropTargetBeforeRename
+    DropTargetBeforeRename
+    def toCArg: 
+        case self of
+            DontDropTargetBeforeRename: CInt8.fromInt 0 . toCArg 
+            DropTargetBeforeRename:     CInt8.fromInt 1 . toCArg
+        
 # Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
@@ -90,4 +98,10 @@ class Collection:
     # retuns deleted documents count (0-1)
     def deleteMany query:
         mongoh_json "mongoh_delete_many" self.ptr [query] . getInt "deletedCount"
+
+    def rename newDatabaseName newCollectionName dropTargetPolicy:
+        withStringCArg newDatabaseName newDatabaseNameC:
+            withStringCArg newCollectionName newCollectionNameC:
+                callMongohReturningTrue "mongoh_collection_rename" [self.ptr.toCArg, newDatabaseNameC, newCollectionNameC, dropTargetPolicy.toCArg]
+        
 

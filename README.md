@@ -65,7 +65,7 @@ This class represents a MongoDB connection. It is typically obtained by a `Mongo
 The object of this class allows performing actions on a specific MongoDB database. Note that it is just a handle to the database, not the collection of documents itself.
 * `collectionNames :: [Text]` — fetches names of all the collections contained by the database.
 * `collection name :: Collection` — creates a `Collection` control object for collection with a given name. Note: this does not actually create the collection if not present (unless collection is written to later). To immediately create collection please use `createCollection` method. 
-* `createCollection name :: Collection` — creates a `Collection` in the database.
+* `createCollection name :: Collection` — creates a `Collection` in the database. Throws an exception if such collection already exists. Please use `collection` if you just want to work on collection of given name.
 * `drop :: None` — drops the database from the server.
 * `hasCollection name :: Text -> Bool` — checks if collection with a given name exists in the database
 * `name :: Text` — fetches the database name.
@@ -80,3 +80,4 @@ The object of this class allows performing actions on a specific MongoDB databas
 * `findOne query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
 * `deleteOne query :: JSON -> Int` — looks for a document matching the `query` and deletes it if found. Returns the deleted documents count (0 or 1).
 * `deleteMany query :: JSON -> Int` — deletes all documents matching the query. Returns deleted documents count.
+* `rename newDatabaseName newCollectionName dropTargetPolicy :: Text -> Text -> RenamePolicy -> None` — renames the collection. It will remain safe to use after rename (object will point to the renamed collection). Drop dropTargetPolicy can be either `DropTargetBeforeRename` or `DontDropTargetBeforeRename`.

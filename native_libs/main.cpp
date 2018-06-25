@@ -121,6 +121,10 @@ extern "C"
 		return callHandlingError(__FUNCTION__, mongoc_database_drop, database);
 	}
 
+	EXPORT bool mongoh_collection_rename(mongoc_collection_t *collection, const char *new_db, const char *new_name, bool drop_target_before_rename)
+	{
+		return callHandlingError(__FUNCTION__, mongoc_collection_rename, collection, new_db, new_name, drop_target_before_rename);
+	}
 
 	// returns text json to be freed with bson_free
 	EXPORT int64_t mongoh_count(mongoc_collection_t *collection, const char *queryJsonText)
