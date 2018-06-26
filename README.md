@@ -71,13 +71,25 @@ The object of this class allows performing actions on a specific MongoDB databas
 * `name :: Text` — fetches the database name.
 
 ### class `Collection`
+The object provides access for MongoDB collection, supporting CRUD operations.
+
+#### Methods:
 * `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
 * `drop :: None` — drops the collection, including all associated indexes.
 * `name :: Text` — fetches the name of the collection.
 * `insertOne document :: JSON -> None` — inserts given document into the dollcetion.
 * `updateOne selector updates :: JSON -> JSON -> JSON` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax.
+* `find query :: JSON -> Cursor` — queries the collection and returns cursor allowing iteration over matching documents. See the `Cursor` class documentation.
 * `findAll query :: JSON -> [JSON]` — retrieves all documents in the collection matching to `query`.
 * `findOne query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
 * `deleteOne query :: JSON -> Int` — looks for a document matching the `query` and deletes it if found. Returns the deleted documents count (0 or 1).
 * `deleteMany query :: JSON -> Int` — deletes all documents matching the query. Returns deleted documents count.
-* `rename newDatabaseName newCollectionName dropTargetPolicy :: Text -> Text -> RenamePolicy -> None` — renames the collection. It will remain safe to use after rename (object will point to the renamed collection). Drop dropTargetPolicy can be either `DropTargetBeforeRename` or `DontDropTargetBeforeRename`.
+* `rename newDatabaseName newCollectionName dropTargetPolicy :: Text -> Text -> RenamePolicy -> None` — renames the collection. It will remain safe to use after rename (object will point to the renamed collection). Drop dropTargetPolicy can be either `DropTargetBeforeRename` or `DontDropTargetBeforeRename`. The latter is selected, an exception will be raised if collection with the same name as target already exists.
+
+### class `Cursor`
+Class for iterating over results of MongoDB query. 
+
+#### Methods:
+* `current :: Maybe JSON` — obtains the current document under cursor. Returns `Nothing` after all documents were iterated or before the `next` method was called for the first time. 
+* `next :: Maybe JSON` — iterates the cursor setting it to the next document and returning it. `Nothing` means that there are no more documents.
+* `toList :: [Json]` — iterates over all the remaining documents and returns them as a list.

@@ -45,6 +45,17 @@ def callMongohReturningPointer methodName args:
     result = mongoh methodName . call (Pointer None) args
     if result.isNull then reportError else result
 
+# assume null means Nothing
+# throws if result is unparsable
+# returns Maybe JSON
+def callMongohReturningConsumableMaybeJsonText methodName args:
+    result = mongoh methodName . call (Pointer CChar) args
+    case result.isNull of
+        True: Nothing
+        False:
+            text = consumeBsonStringToText result.ptr
+            Just (JSON.parse text)
+
 # TODO: [MU] make sure that some lazy evaluation thing does not break it
 def bracket before after item:
     sth = before

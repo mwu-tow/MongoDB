@@ -3,6 +3,7 @@ import Std.Base
 import Std.Foreign
 import Std.Foreign.C.Value
 
+import MongoDB.Cursor
 import MongoDB.Collection
 import MongoDB.Database
 import MongoDB.Client
@@ -11,9 +12,21 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
+    col = client.collection "lunaDB" "kursory"
+    cursor = col.find "{}"
+    doc = cursor.current
+    print doc
+    allDoc = cursor.toList
+    print allDoc
+    allDoc2 = col.findAll "{}"
+    print allDoc2
+
+def main4:
+    MongoDB.init
+    client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     db = client.database "lunaDB"
     print db.collectionNames
-    col2 = db.createCollection "testy5"
+    col2 = db.collection "testy5"
     print db.collectionNames
     col = db.collection "testy2"
     print db.collectionNames

@@ -3,6 +3,7 @@ import Std.Foreign
 import Std.Foreign.C.Value
 
 import MongoDB.Utils
+import MongoDB.Cursor
 
 def consume_json result:
     case result.isNull of 
@@ -86,6 +87,11 @@ class Collection:
     # returns any document in collection that matches given query or Nothing if there is no match
     def findOne query:
         mongoh_json "mongoh_find_one" self.ptr [query] . asList.head
+
+    def find query:
+        withStringCArg query queryC:
+            cursorPtr = callMongohReturningPointer "mongoh_find" [self.ptr.toCArg, queryC]
+            cursorFromPointer cursorPtr
 
     # JSON -> Int
     # deletes at most one document matching the query

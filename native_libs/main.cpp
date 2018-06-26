@@ -51,6 +51,9 @@ extern "C"
 	// Returned c-string should be freed with bson_free
 	EXPORT char * bsonToJson(const bson_t *bson)
 	{
+		if(!bson)
+			return nullptr;
+
 		size_t len;
 		return bson_as_json(bson, &len);
 	}
@@ -172,6 +175,17 @@ extern "C"
 		return nullptr;
 	}
 
+	// returns pointer to cursor to be freed with mongoc_cursor_destroy
+	EXPORT mongoc_cursor_t * mongoh_find(mongoc_collection_t *collection, const char *queryJsonText)
+	{
+		const unique_bson_ptr query = jsonToBson(queryJsonText);
+		if(!query)
+			return nullptr;
+
+		auto cursor = mongoc_collection_find_with_opts(collection, query.get(), nullptr, nullptr);
+		return cursor;
+	}
+
 	// returns text json to be freed with bson_free
 	EXPORT char *mongoh_find_one(mongoc_collection_t *collection, const char *queryJsonText)
 	{
@@ -243,6 +257,23 @@ extern "C"
 	EXPORT char **mongoh_get_database_names(mongoc_client_t *client)
 	{
 		return callHandlingError("get database names", mongoc_client_get_database_names_with_opts, client, nullptr);
+	}
+
+	// use bson_free on result
+	EXPORT char *mongoh_cursor_current(mongoc_cursor_t *cursor)
+	{
+		return bsonToJson(mongoc_cursor_current(cursor));
+	}
+
+	// use bson_free on result
+	EXPORT char *mongoh_cursor_next(mongoc_cursor_t *cursor)
+	{
+		const bson_t *out = nullptr;
+		auto result = mongoc_cursor_next(cursor, &out);
+		if(result)
+			return bsonToJson(out);
+		else
+			return nullptr;
 	}
 
 	EXPORT void foo()

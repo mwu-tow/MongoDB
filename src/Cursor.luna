@@ -1,0 +1,30 @@
+import Std.Base
+import Std.Foreign
+import Std.Foreign.C.Value
+
+import MongoDB.Utils
+
+# Pointer None -> Cursor
+def cursorFromPointer ptr:
+    mongoc_cursor_destroy = mongoc "mongoc_cursor_destroy"
+    case ptr.isNull of 
+        True: throw "expected cursor pointer is nullptr"
+        False: 
+            Cursor (managedPtr mongoc_cursor_destroy ptr)
+    
+class Cursor:
+    ptr :: ManagedPointer None
+
+    def toCArg: self.ptr.toCArg
+
+    def current:
+        callMongohReturningConsumableMaybeJsonText "mongoh_cursor_current" [self.toCArg]
+    def next:
+        callMongohReturningConsumableMaybeJsonText "mongoh_cursor_next" [self.toCArg]
+
+    def toList:
+        doc = self.next
+        case doc of
+            Nothing: []
+            Just json: Prepend json self.toList
+
