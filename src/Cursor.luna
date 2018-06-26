@@ -19,6 +19,9 @@ class Cursor:
 
     def current:
         callMongohReturningConsumableMaybeJsonText "mongoh_cursor_current" [self.toCArg]
+    def error:
+        result = (mongoh "mongoh_cursor_error" . call (Pointer CChar) [self.toCArg]).ptr
+        if result.isNull then Nothing else Just (readTextUnownedFromCStr result)
     def next:
         callMongohReturningConsumableMaybeJsonText "mongoh_cursor_next" [self.toCArg]
 

@@ -13,13 +13,19 @@ def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     col = client.collection "lunaDB" "kursory"
-    cursor = col.find "{}"
-    doc = cursor.current
-    print doc
+    cursor = col.find '{"_id": {"$oid": "5b3221fc6ac36a5758002763"}}'
+    d = cursor.next
+    e = cursor.error
+    d = cursor.next
+    e = cursor.error
+    print d
+    print e
     allDoc = cursor.toList
-    print allDoc
-    allDoc2 = col.findAll "{}"
-    print allDoc2
+    print ("aaa" + allDoc.toText)
+    allDoc2 = col.findAll '{}'
+    print ("bbb1")
+    print ("bbb2 " + allDoc2.toText)
+    print ("bbb3")
 
 def main4:
     MongoDB.init

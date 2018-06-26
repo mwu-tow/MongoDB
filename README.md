@@ -91,5 +91,6 @@ Class for iterating over results of MongoDB query.
 
 #### Methods:
 * `current :: Maybe JSON` — obtains the current document under cursor. Returns `Nothing` after all documents were iterated or before the `next` method was called for the first time. 
+* `error :: Maybe Text` — checks if error has occurred while iterating the cursor.
 * `next :: Maybe JSON` — iterates the cursor setting it to the next document and returning it. `Nothing` means that there are no more documents.
 * `toList :: [Json]` — iterates over all the remaining documents and returns them as a list.

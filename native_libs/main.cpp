@@ -15,6 +15,14 @@ using namespace std::literals;
 
 static thread_local std::string lastError;
 
+static void setLastError(const bson_error_t &error, const std::string &prefix)
+{
+	if(error.code == 0)
+		lastError.clear();
+	else
+		lastError = prefix + error.message;
+}
+
 struct unique_bson_ptr
 {
 	std::unique_ptr<bson_t, void(*)(bson_t*)> ptr;
@@ -30,11 +38,7 @@ auto callHandlingError(const std::string &errorMsg, Ptr ptr, Args... args)
 	error.code = 0;
 
 	const auto ret = (*ptr)(args..., &error);
-	if(error.code == 0)
-		lastError.clear();
-	else
-		lastError = "Failed to " + errorMsg + ": " + error.message;
-
+	setLastError(error, errorMsg.size() ? "Failed to " + errorMsg + ": " : ""s);
 	return ret;
 }
 
@@ -274,6 +278,13 @@ extern "C"
 			return bsonToJson(out);
 		else
 			return nullptr;
+	}
+
+	// don't free result!
+	EXPORT const char *mongoh_cursor_error(mongoc_cursor_t *cursor)
+	{
+		auto ret = callHandlingError(""s, &mongoc_cursor_error, cursor);
+		return getLastError();
 	}
 
 	EXPORT void foo()
