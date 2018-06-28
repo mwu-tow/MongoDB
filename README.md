@@ -90,7 +90,13 @@ The object provides access for MongoDB collection, supporting CRUD operations.
 Class for iterating over results of MongoDB query. 
 
 #### Methods:
+* `batchSize :: Int` — returns the maximum number of documents returned per round trip to the server. Zero means that the cursor accepts the server's maximum batch size.
+* `clone :: Cursor` — creates a copy of cursor that will be reset to the beginning of the query.
 * `current :: Maybe JSON` — obtains the current document under cursor. Returns `Nothing` after all documents were iterated or before the `next` method was called for the first time. 
 * `error :: Maybe Text` — checks if error has occurred while iterating the cursor.
+* `id :: Int` — returns cursor id used by server, number zero is returned: 1) before the driver uses server when executing query; 2) after all results are fetched. 
+* `limit :: Int` — returns the previously set limit value, see `setLimit`.
 * `next :: Maybe JSON` — iterates the cursor setting it to the next document and returning it. `Nothing` means that there are no more documents.
+* `setBatchSize :: Int -> None` — sets the cursor's batch size — the maximum number of documents returned per round trip to the server. Please refer to [MongoDB documentation](https://docs.mongodb.com/manual/tutorial/iterate-a-cursor/#cursor-batches) for more information on cursor batches.
+* `setLimit :: Int -> None` — sets the maximum number of documents to be retrieved by this query. Must be called before the first call to the `next` method.
 * `toList :: [Json]` — iterates over all the remaining documents and returns them as a list.
