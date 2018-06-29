@@ -80,7 +80,8 @@ The object provides access for MongoDB collection, supporting CRUD operations.
 * `drop :: None` — drops the collection, including all associated indexes.
 * `name :: Text` — fetches the name of the collection.
 * `insertOne document :: JSON -> None` — inserts given document into the dollcetion.
-* `updateOne selector updates :: JSON -> JSON -> JSON` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax.
+* `updateOne selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
+* `updateMany selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for all documents matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
 * `find query :: JSON -> Cursor` — queries the collection and returns cursor allowing iteration over matching documents. See the `Cursor` class documentation.
 * `findAll query :: JSON -> [JSON]` — retrieves all documents in the collection matching to `query`.
 * `findOne query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
@@ -102,3 +103,13 @@ Class for iterating over results of MongoDB query.
 * `setBatchSize :: Int -> None` — sets the cursor's batch size — the maximum number of documents returned per round trip to the server. Please refer to [MongoDB documentation](https://docs.mongodb.com/manual/tutorial/iterate-a-cursor/#cursor-batches) for more information on cursor batches.
 * `setLimit :: Int -> None` — sets the maximum number of documents to be retrieved by this query. Must be called before the first call to the `next` method.
 * `toList :: [Json]` — iterates over all the remaining documents and returns them as a list.
+
+### class `UpdateResult`
+
+#### Fields:
+* `matchedCount :: Int` — number of found documents that matches the query, i.e. documets selected for update.
+* `modifiedCount :: Int` — number of actually updated documents. If the update operation results in no change for a document (like setting already set value), this value will be lower than `matchedCount`.
+
+#### Methods
+* `toJSON :: JSON`
+* `toText :: Text` 

@@ -46,7 +46,19 @@ class RenamePolicy:
         case self of
             DontDropTargetBeforeRename: CInt8.fromInt 0 . toCArg 
             DropTargetBeforeRename:     CInt8.fromInt 1 . toCArg
-        
+
+class UpdateResult:
+    matchedCount :: Int
+    modifiedCount :: Int
+
+    def toJSON:
+        JSONObject (Map.singleton "matchedCount" self.matchedCount.toJSON . insert "modifiedCount" self.modifiedCount.toJSON)
+    def toText: self.toJSON.toText
+
+def consumeReplyTextYieldingUpdateResult result:
+    reply = consumeExpectedJsonText result
+    UpdateResult (reply.get "matchedCount" . asInt) (reply.get "modifiedCount" . asInt)
+
 # Named collection of documents, being a member of some database
 class Collection:
     ptr :: ManagedPointer None
@@ -72,11 +84,11 @@ class Collection:
 
     def updateOne selector updates:
         result = twoStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_update_one") selector.toText updates.toText
-        case result.isNull of 
-        True: 
-            reportError
-        False: 
-            consumeBsonStringToText result.ptr
+        consumeReplyTextYieldingUpdateResult result
+
+    def updateMany selector updates:
+        result = twoStringMethod self.ptr (Pointer CChar) (mongoh "mongoh_update_many") selector.toText updates.toText
+        consumeReplyTextYieldingUpdateResult result
 
     # JSON -> [JSON]
     # returns all documents in collection that match given query

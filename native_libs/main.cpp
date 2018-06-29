@@ -95,7 +95,23 @@ extern "C"
 			return nullptr;
 
 		bson_t reply;
-		if(callHandlingError("update one", &mongoc_collection_update_one, collection, selectorQuery.get(), update.get(), nullptr, &reply))
+		if(callHandlingError(__FUNCTION__, &mongoc_collection_update_one, collection, selectorQuery.get(), update.get(), nullptr, &reply))
+			return bsonToJson(&reply);
+
+		return nullptr;
+	}
+
+	EXPORT const char* mongoh_update_many(mongoc_collection_t *collection, const char *queryJsonText, const char *updateJsonText)
+	{
+		const unique_bson_ptr selectorQuery = jsonToBson(queryJsonText);
+		if(!selectorQuery)
+			return nullptr;
+		const unique_bson_ptr update = jsonToBson(updateJsonText);
+		if(!update)
+			return nullptr;
+
+		bson_t reply;
+		if(callHandlingError(__FUNCTION__, &mongoc_collection_update_many, collection, selectorQuery.get(), update.get(), nullptr, &reply))
 			return bsonToJson(&reply);
 
 		return nullptr;

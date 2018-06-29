@@ -45,6 +45,15 @@ def callMongohReturningPointer methodName args:
     result = mongoh methodName . call (Pointer None) args
     if result.isNull then reportError else result
 
+# Pointer CChar -> Maybe JSON
+def consumeExpectedJsonText result:
+    case result.isNull of
+        True: 
+            reportError
+        False:
+            text = consumeBsonStringToText result.ptr
+            JSON.parse text
+
 # assume null means Nothing
 # throws if result is unparsable
 # returns Maybe JSON

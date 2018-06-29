@@ -12,6 +12,16 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
+    collection = client.collection "testy" "lunadb"
+    collection.insertOne (JSON.parse '{"hello": "world"}')
+    collection.insertOne (JSON.parse '{"hello": "world"}')
+    findQuery = JSON.parse '{}'
+    updateResult = collection.updateOne findQuery ('{"$set": {"cos" : "nowego"}}')
+    print ("Update result: " + updateResult.toText)
+
+def main5:
+    MongoDB.init
+    client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     col = client.collection "sample" "grades"
     count = col.command (JSON.parse '{"distinct" : "grades", "key" : "student_id"}')
     print count
