@@ -105,6 +105,20 @@ class Collection:
     def deleteMany query:
         mongoh_json "mongoh_delete_many" self.ptr [query] . getInt "deletedCount"
 
+    def command commandJSON:
+        result = singleStringMethod self.ptr (Pointer CChar) (mongoh "collectionSimpleCommand") commandJSON.toText
+        case result.isNull of 
+            True: reportError
+            False: JSON.parse (consumeBsonStringToText result.ptr)
+
+    def distinct key maybeQuery:
+        commandMap0 = Tip.insert "distinct" (JSONString self.name) . insert "key" (JSONString key)
+        commandMap1 = case maybeQuery of
+            Just query: commandMap0.insert "query" query
+            Nothing: commandMap0
+        result = self.command (JSONObject commandMap1)
+        result.get "values" . asList
+
     def rename newDatabaseName newCollectionName dropTargetPolicy:
         withStringCArg newDatabaseName newDatabaseNameC:
             withStringCArg newCollectionName newCollectionNameC:

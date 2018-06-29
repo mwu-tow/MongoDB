@@ -12,13 +12,11 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
-    col = client.collection "lunaDB" "kursory"
-    cursor1 = col.find '{}'
-    cursor1.setBatchSize 1
-    print cursor1.id
-    a = cursor1.next
-    print a
-    print cursor1.id
+    col = client.collection "sample" "grades"
+    count = col.command (JSON.parse '{"distinct" : "grades", "key" : "student_id"}')
+    print count
+    count2 = col.distinct "scores.score" (Just (JSON.parse '{"class_id" : 2}'))
+    print count2
 
 def main4:
     MongoDB.init

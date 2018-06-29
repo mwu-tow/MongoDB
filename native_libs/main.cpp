@@ -256,6 +256,21 @@ extern "C"
 		return nullptr;
 	}
 
+	// Returned c-string should be freed with bson_free
+	EXPORT char* collectionSimpleCommand(mongoc_collection_t *collection, const char*jsonCommandText)
+	{
+		unique_bson_ptr commandBson = jsonToBson(jsonCommandText);
+		if(!commandBson)
+			return nullptr;
+
+		bson_t reply;
+		const auto description = "call simple collection command `"s + jsonCommandText;
+		if(callHandlingError(description, mongoc_collection_command_simple, collection, commandBson.get(), nullptr, &reply))
+			return bsonToJson(&reply);
+
+		return nullptr;
+	}
+
 
 	// use bson_strfreev on result
 	EXPORT char **mongoh_get_database_names(mongoc_client_t *client)

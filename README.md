@@ -74,7 +74,9 @@ The object of this class allows performing actions on a specific MongoDB databas
 The object provides access for MongoDB collection, supporting CRUD operations.
 
 #### Methods:
+* `command coomandJSON :: JSON -> JSON` — executes a command over a collection.
 * `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
+* `distinct key query :: Text -> Maybe JSON -> [JSON]` — returns all distinct values of the field `key`, optionally limiting documents from which values shall be retrieved only to the ones matching the query.
 * `drop :: None` — drops the collection, including all associated indexes.
 * `name :: Text` — fetches the name of the collection.
 * `insertOne document :: JSON -> None` — inserts given document into the dollcetion.
