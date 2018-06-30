@@ -196,6 +196,17 @@ extern "C"
 	}
 
 	// returns pointer to cursor to be freed with mongoc_cursor_destroy
+	EXPORT mongoc_cursor_t * mongoh_aggregate(mongoc_collection_t *collection, const char *pipelineJsonText)
+	{
+		const unique_bson_ptr pipeline = jsonToBson(pipelineJsonText);
+		if(!pipeline)
+			return nullptr;
+
+		auto cursor = mongoc_collection_aggregate(collection, MONGOC_QUERY_NONE, pipeline.get(), nullptr, nullptr);
+		return cursor;
+	}
+
+	// returns pointer to cursor to be freed with mongoc_cursor_destroy
 	EXPORT mongoc_cursor_t * mongoh_find(mongoc_collection_t *collection, const char *queryJsonText)
 	{
 		const unique_bson_ptr query = jsonToBson(queryJsonText);

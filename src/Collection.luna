@@ -63,6 +63,10 @@ def consumeReplyTextYieldingUpdateResult result:
 class Collection:
     ptr :: ManagedPointer None
 
+    def aggregate pipelineJson:
+        result = singleStringMethod self.ptr (Pointer None) (mongoh "mongoh_aggregate") pipelineJson.toText
+        if result.isNull then reportError else cursorFromPointer result
+            
     def count query:
         mongoh_int "mongoh_count" self.ptr [query]
 
@@ -100,6 +104,7 @@ class Collection:
     def findOne query:
         mongoh_json "mongoh_find_one" self.ptr [query] . asList.head
 
+    # JSON -> Cursor
     def find query:
         withStringCArg query queryC:
             cursorPtr = callMongohReturningPointer "mongoh_find" [self.ptr.toCArg, queryC]

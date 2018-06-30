@@ -74,14 +74,15 @@ The object of this class allows performing actions on a specific MongoDB databas
 The object provides access for MongoDB collection, supporting CRUD operations.
 
 #### Methods:
-* `command coomandJSON :: JSON -> JSON` — executes a command over a collection.
+* `aggregate pipelineJSON :: JSON -> Cursor` — executes an aggregation query on the collection and returns `Cursor` for iterating over results. See [MongoDB documentation](https://docs.mongodb.com/manual/reference/command/aggregate/) for details.
+* `command coomandJSON :: JSON -> JSON` — executes a command on the collection.
 * `count query :: JSON -> Int` — executes a count query on the collection and returns the number of matching documents.
 * `distinct key query :: Text -> Maybe JSON -> [JSON]` — returns all distinct values of the field `key`, optionally limiting documents from which values shall be retrieved only to the ones matching the query.
 * `drop :: None` — drops the collection, including all associated indexes.
 * `name :: Text` — fetches the name of the collection.
 * `insertOne document :: JSON -> None` — inserts given document into the dollcetion.
-* `updateOne selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
-* `updateMany selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for all documents matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/?_ga=2.267346574.1022409252.1529405873-838949899.1529405873) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
+* `updateOne selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for a document matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
+* `updateMany selector updates :: JSON -> JSON -> UpdateResult` — executes a query looking for all documents matching the `selector` — if found, performs update described by `updates`. Please refer to [MongoDB documentation](https://docs.mongodb.com/master/reference/command/update/) for more information on update descriptor syntax. Returns object with two numbers — count of matched documents and count of modified documents.
 * `find query :: JSON -> Cursor` — queries the collection and returns cursor allowing iteration over matching documents. See the `Cursor` class documentation.
 * `findAll query :: JSON -> [JSON]` — retrieves all documents in the collection matching to `query`.
 * `findOne query :: JSON -> Maybe JSON` — returns any document from the collection that matches `query` or `Nothing` if there is none.
@@ -105,6 +106,7 @@ Class for iterating over results of MongoDB query.
 * `toList :: [Json]` — iterates over all the remaining documents and returns them as a list.
 
 ### class `UpdateResult`
+Objects of this class are returned by the `updateOne` and `updateMany` methods of the `Collection` class.
 
 #### Fields:
 * `matchedCount :: Int` — number of found documents that matches the query, i.e. documets selected for update.

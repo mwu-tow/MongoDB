@@ -12,12 +12,11 @@ import MongoDB.MongoDB
 def main:
     MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
-    collection = client.collection "testy" "lunadb"
-    collection.insertOne (JSON.parse '{"hello": "world"}')
-    collection.insertOne (JSON.parse '{"hello": "world"}')
-    findQuery = JSON.parse '{}'
-    updateResult = collection.updateOne findQuery ('{"$set": {"cos" : "nowego"}}')
-    print ("Update result: " + updateResult.toText)
+    collection = client.collection "sample" "grades"
+    cursor = collection.aggregate (JSON.parse '[{"$match" : {"student_id": 1}}, {"$group" : {"_id" : "$student_id", "scores" : {"$push" : "$scores"}}}, {"$sort" : {"_id" : -1}}]')
+    items = cursor.toList
+    print items
+
 
 def main5:
     MongoDB.init
