@@ -46,8 +46,8 @@ All public interface of the library is described below. Each class is in a modul
 This class contains a few methods that are "global" for the Mongo bindings. Its objects can be freely constructed using the `MongoDB` constructor.
 
 #### Methods:
-* `init :: None` — should be called before making any other call into this library. Initializes a global state of the underlying C driver.
-* `cleanup :: None` — should be called when there will be no more calls into this library. Releases all the resources allocated by the driver. **NOTE: it is not allowed to call `init` once again after `cleanup`!**
+* `init :: None` — should be called before making any other call into this library. Initializes a global state of the underlying C driver. **NOTE: It is not necessary to call this method manually, it will be called automatically when the first client is created.**
+* `cleanup :: None` — should be called when there will be no more calls into this library. Releases all the resources allocated by the driver. **NOTE: It is not allowed to call `init` once again after `cleanup`!**
 * `newClient uri :: Text -> Client` — creates a new `Client` object representing a MongoDB connection. `uri` is a `Text` parameter, for example `"mongodb://192.168.11.20:27017"`. Please refer to the [MongoDB documentation](https://docs.mongodb.com/manual/reference/connection-string/?_ga=2.226838301.1022409252.1529405873-838949899.1529405873) for more information about supported URI syntax.
 
 ### class `Client`

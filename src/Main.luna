@@ -10,16 +10,12 @@ import MongoDB.Client
 import MongoDB.MongoDB
 
 def main:
-    MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     collection = client.collection "sample" "grades"
-    cursor = collection.aggregate (JSON.parse '[{"$match" : {"student_id": 1}}, {"$group" : {"_id" : "$student_id", "scores" : {"$push" : "$scores"}}}, {"$sort" : {"_id" : -1}}]')
-    items = cursor.toList
-    print items
-
+    result = collection.command (JSON.parse '{"find" : "grades"}')
+    print result
 
 def main5:
-    MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     col = client.collection "sample" "grades"
     count = col.command (JSON.parse '{"distinct" : "grades", "key" : "student_id"}')
@@ -28,7 +24,6 @@ def main5:
     print count2
 
 def main4:
-    MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     db = client.database "lunaDB"
     print db.collectionNames
@@ -46,7 +41,6 @@ def main4:
 
 def main3:
     print "Main start"
-    MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     print client.defaultDatabase.get.name
     print client.databaseNames
@@ -69,7 +63,6 @@ def main3:
     print (client2.database "lunaDB" . hasCollection "moje")
 
 def main2:
-    MongoDB.init
     client = MongoDB.newClient "mongodb://192.168.11.20:27017"
     client.setAppname "lunawrapper"
 
