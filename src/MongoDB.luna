@@ -17,7 +17,5 @@ class MongoDB:
         self.init
         withStringCArg uri (uri_cstr):
             mongoc_client_new = mongoc "mongoc_client_new"
-            mongoc_client_destroy = mongoc "mongoc_client_destroy"
             ptr = mongoc_client_new.call (Pointer None)  [uri_cstr]
-            managedHandle = managedPtr mongoc_client_destroy ptr
-            Client managedHandle
+            Client._fromPtr ptr

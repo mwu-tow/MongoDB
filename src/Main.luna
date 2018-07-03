@@ -9,7 +9,16 @@ import MongoDB.Database
 import MongoDB.Client
 import MongoDB.MongoDB
 
-def main:
+def defaultDatabase:
+    printMaybeDb = url:
+        case MongoDB.newClient url . defaultDatabase of
+            Nothing: print "No default database"
+            Just db: print ("Default database named " + db.name)
+    printMaybeDb "mongodb://192.168.11.20:27017/defolt"
+    printMaybeDb "mongodb://192.168.11.20:27017"
+    printMaybeDb "mongodb://192.168.11.201:27017/defolt"
+
+def main6:
     client = MongoDB.newClient "mongodb://192.168.11.20:27017/defolt"
     collection = client.collection "sample" "grades"
     result = collection.command (JSON.parse '{"find" : "grades"}')
@@ -62,7 +71,7 @@ def main3:
     client2 = MongoDB.newClient "mongodb://192.168.11.21:27017/defolt"
     print (client2.database "lunaDB" . hasCollection "moje")
 
-def main2:
+def main:
     client = MongoDB.newClient "mongodb://192.168.11.20:27017"
     client.setAppname "lunawrapper"
 

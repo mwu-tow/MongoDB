@@ -7,19 +7,29 @@ import MongoDB.Database
 import MongoDB.Utils
 
 class Client:
-    ptr :: ManagedPointer None
+    Client
+    ClientVal (ManagedPointer None)
 
+    def ptr: case self of
+        ClientVal p: p
+        Client: throw "Invalid client object, please use `MongoDB.newClient`"
+
+    def _fromPtr ptr:
+        mongoc_client_destroy = mongoc "mongoc_client_destroy"
+        case ptr.isNull of 
+            True: throw "missing client"
+            False: ClientVal (managedPtr mongoc_client_destroy ptr)
 
     def collection dbname collectionName:
         collectionHandle = twoStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_collection") dbname collectionName
-        collectionFromPointer collectionHandle
+        Collection._fromPtr collectionHandle
 
     def setAppname: 
         singleStringMethod self.ptr CInt8 (mongoc "mongoc_client_set_appname")
 
     def database dbname:
         dbHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_client_get_database") dbname
-        databaseFromPointer dbHandle
+        Database._fromPtr dbHandle
 
     def databaseNames:
         callMongohReturningTexts "mongoh_get_database_names" [self.ptr.toCArg]
@@ -27,7 +37,7 @@ class Client:
     def defaultDatabase: 
         mongoc_client_get_default_database = mongoc "mongoc_client_get_default_database"
         dbHandle = mongoc_client_get_default_database.call (Pointer None) [self.ptr.toCArg]
-        if dbHandle.isNull then Nothing else Just (databaseFromPointer dbHandle)
+        if dbHandle.isNull then Nothing else Just (Database._fromPtr dbHandle)
     
     def simpleCommand dbname commandJson:
         result = twoStringMethod self.ptr (Pointer CChar) (mongoh "simpleCommand") dbname commandJson.toText

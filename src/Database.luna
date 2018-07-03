@@ -4,17 +4,23 @@ import Std.Foreign.C.Value
 
 import MongoDB.Utils
 import MongoDB.Collection
-
-# Pointer None -> Database
-def databaseFromPointer ptr:
-    mongoc_database_destroy = mongoc "mongoc_database_destroy"
-    case ptr.isNull of 
-        True: throw "missing database"
-        False: 
-            Database (managedPtr mongoc_database_destroy ptr)
     
 class Database:
-    ptr :: ManagedPointer None
+    Database
+    DatabaseVal (ManagedPointer None)
+    
+    def ptr: case self of
+        DatabaseVal p: p
+        Database: throw "Invalid database object, please use `Client.database`"
+
+    # Pointer None -> Database
+    def _fromPtr ptr:
+        mongoc_database_destroy = mongoc "mongoc_database_destroy"
+        case ptr.isNull of 
+            True: throw "missing database"
+            False: 
+                DatabaseVal (managedPtr mongoc_database_destroy ptr)
+
     def name:
         nameCStr = mongoc "mongoc_database_get_name" . call (Pointer CChar) [self.ptr.toCArg]
         readTextUnownedFromCStr nameCStr.ptr
@@ -25,11 +31,11 @@ class Database:
 
     def collection name:
         collectionHandle = singleStringMethod self.ptr (Pointer None) (mongoc "mongoc_database_get_collection") name
-        collectionFromPointer collectionHandle
+        Collection._fromPtr collectionHandle
 
     def createCollection name:
         collectionHandle = singleStringMethod self.ptr (Pointer None) (mongoh "mongoh_database_create_collection") name
-        if collectionHandle.isNull then reportError else collectionFromPointer collectionHandle
+        if collectionHandle.isNull then reportError else Collection._fromPtr collectionHandle
 
     def hasCollection name:
         result = singleStringMethod self.ptr (CInt8) (mongoh "mongoh_has_collection") name
