@@ -28,18 +28,18 @@ project(MongoHelper)
 
 add_library(${PROJECT_NAME} SHARED main.cpp)
 
-find_path(BSON_INCLUDE bson.h)
+find_path(BSON_INCLUDE libbson-1.0/bson.h)
 if(NOT BSON_INCLUDE)
     message(WARNING "Cannot find bson include dir")
 else()
-    target_include_directories(${PROJECT_NAME} PRIVATE ${BSON_INCLUDE})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${BSON_INCLUDE}/libbson-1.0)
 endif()
 
-find_path(MONGOC_INCLUDE mongoc.h)
+find_path(MONGOC_INCLUDE libmongoc-1.0/mongoc.h)
 if(NOT MONGOC_INCLUDE)
     message(WARNING "Cannot find mongoc include dir")
 else()
-    target_include_directories(${PROJECT_NAME} PRIVATE ${MONGOC_INCLUDE})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${MONGOC_INCLUDE}/libmongoc-1.0)
 endif()
 
 find_library(BSON_LIBRARY bson-1.0)

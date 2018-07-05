@@ -5,11 +5,10 @@
 #include <mongoc.h>
 
 #ifdef _MSC_VER
-	#pragma comment(lib, "bson-1.0.lib")
-	#pragma comment(lib, "mongoc-1.0.lib")
-#endif
-
 #define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
 using namespace std::literals;
 
